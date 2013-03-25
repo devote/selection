@@ -16,3 +16,9 @@ element.selectionEnd [ = value ]
 //Changes the selection to cover the given substring.
 element.setSelectionRange(start, end)
 ```
+
+Connect at the page as shown in the example below:
+
+```HTML
+<!--[if lte IE 8]><script type="text/javascript" src="selection.htc"></script><![endif]-->
+```
