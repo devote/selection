@@ -1,0 +1,133 @@
+/*
+ * APIs for the text field selections in IE 8 and older - v0.1
+ *
+ * Copyright 2012-2013, Dmitrii Pakhtinov ( spb.piksel@gmail.com )
+ *
+ * http://spb-piksel.ru/ - https://github.com/devote
+ *
+ * Dual licensed under the MIT and GPL licenses:
+ *   http://www.opensource.org/licenses/mit-license.php
+ *   http://www.gnu.org/licenses/gpl.html
+ *
+ * Update: 25-03-2013
+ *
+ * Example for include:
+ *      <!--[if lte IE 8]><script type="text/javascript" src="selection.htc"></script><![endif]-->
+ *
+<PUBLIC:COMPONENT LIGHTWEIGHT="TRUE">
+<PUBLIC:PROPERTY NAME="selectionStart" GET="_getSelectionStart" PUT="_setSelectionStart" />
+<PUBLIC:PROPERTY NAME="selectionEnd" GET="_getSelectionEnd" PUT="_setSelectionEnd" />
+<PUBLIC:METHOD NAME="setSelectionRange" />
+<PUBLIC:METHOD NAME="select" />
+<SCRIPT>
+    _getSelectionStart = window.__ielt8_.selectionStart.get;
+    _setSelectionStart = window.__ielt8_.selectionStart.set;
+    _getSelectionEnd = window.__ielt8_.selectionEnd.get;
+    _setSelectionEnd = window.__ielt8_.selectionEnd.set;
+    function setSelectionRange() {window.__ielt8_.setSelectionRange.apply(this, arguments)};
+    function select() {window.__ielt8_.select.apply(this, arguments)};
+</SCRIPT>
+</PUBLIC:COMPONENT>
+*/
+(function(window) {
+
+    var
+        defineProperty = Object.defineProperty,
+        document = window.document;
+
+    if ('setSelectionRange' in document.createElement('textarea') || !document.attachEvent) {
+        return;
+    }
+
+    function getCaretPosition(self, type) {
+        var
+            elem = self.element || self,
+            start = 0,
+            end = 0;
+
+        if (elem['__selectionBookmark']) {
+            var range = elem.createTextRange();
+            range.moveToBookmark(elem['__selectionBookmark']);
+            var length = range.text.length;
+            range.collapse(true);
+            range.moveStart('character', -elem.value.length);
+            start = range.text.length;
+            end = start + length;
+        }
+        return (type ? start : end) || 0;
+    }
+
+    function setCaretPosition(self, start, end) {
+        var elem = self.element || self;
+        var range = elem.createTextRange();
+        range.collapse(true);
+        range.moveEnd('character', end);
+        range.moveStart('character', start);
+        range.select();
+        elem['__selectionBookmark'] = range.getBookmark();
+    }
+
+    var accessors = {
+        "selectionStart": {
+            get: function() {
+                return getCaretPosition(this, 1);
+            },
+            set: function(value) {
+                var end = getCaretPosition(this);
+                setCaretPosition(this, value, end < value ? value : end);
+            }
+        },
+        "selectionEnd": {
+            get: function() {
+                return getCaretPosition(this);
+            },
+            set: function(value) {
+                var start = getCaretPosition(this, 1);
+                setCaretPosition(this, start > value ? value : start, value);
+            }
+        },
+        "setSelectionRange": function(start, end) {
+            setCaretPosition(this, start, end);
+        },
+        "select": function() {
+            var end = (this.element || this).value.length;
+            setCaretPosition(this, 0, end);
+        }
+    }
+
+    if (defineProperty) {
+        var area = window['HTMLTextAreaElement'].prototype;
+        var input = window['HTMLInputElement'].prototype;
+        for(var key in accessors) {
+            if ('get' in accessors[key]) {
+                defineProperty(area, key, accessors[key]);
+                defineProperty(input, key, accessors[key]);
+            } else {
+                area[key] = input[key] = accessors[key];
+            }
+        }
+    } else {
+        window["__ielt8_"] = accessors;
+        var scripts = document.getElementsByTagName("SCRIPT");
+        var style = document.createElement("STYLE");
+        var head = document.documentElement.firstChild;
+        var src = scripts[scripts.length - 1].getAttribute("src", -1);
+        style.setAttribute("type", "text/css");
+        style.styleSheet.cssText = "INPUT,TEXTAREA{behavior:url(" + src + ")}";
+        head.insertBefore(style, head.firstChild);
+    }
+
+    (function(events, handler) {
+        for(var i = 0; i < events.length; i++) {
+            document.attachEvent(events[i], handler);
+        }
+    })(['onmouseup','onmousedown','onkeyup'], function() {
+        var target = window.event.srcElement;
+        if (target && (target.nodeName === 'TEXTAREA' || (target.nodeName === 'INPUT' && target.type === 'text'))) {
+            var range = document.selection.createRange();
+            if (range.parentElement() === target) {
+                target['__selectionBookmark'] = range.getBookmark();
+            }
+        }
+    });
+})(window);

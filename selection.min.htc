@@ -1,0 +1,35 @@
+/*
+ * APIs for the text field selections in IE 8 and older - v0.1
+ *
+ * Copyright 2012-2013, Dmitrii Pakhtinov ( spb.piksel@gmail.com )
+ *
+ * http://spb-piksel.ru/ - https://github.com/devote
+ *
+ * Dual licensed under the MIT and GPL licenses:
+ *   http://www.opensource.org/licenses/mit-license.php
+ *   http://www.gnu.org/licenses/gpl.html
+ *
+ * Update: 25-03-2013
+ *
+ * Example for include:
+ *      <!--[if lte IE 8]><script type="text/javascript" src="selection.htc"></script><![endif]-->
+ *
+<PUBLIC:COMPONENT LIGHTWEIGHT="TRUE">
+<PUBLIC:PROPERTY NAME="selectionStart" GET="_getSelectionStart" PUT="_setSelectionStart" />
+<PUBLIC:PROPERTY NAME="selectionEnd" GET="_getSelectionEnd" PUT="_setSelectionEnd" />
+<PUBLIC:METHOD NAME="setSelectionRange" />
+<PUBLIC:METHOD NAME="select" />
+<SCRIPT>
+    _getSelectionStart = window.__ielt8_.selectionStart.get;
+    _setSelectionStart = window.__ielt8_.selectionStart.set;
+    _getSelectionEnd = window.__ielt8_.selectionEnd.get;
+    _setSelectionEnd = window.__ielt8_.selectionEnd.set;
+    function setSelectionRange() {window.__ielt8_.setSelectionRange.apply(this, arguments)};
+    function select() {window.__ielt8_.select.apply(this, arguments)};
+</SCRIPT>
+</PUBLIC:COMPONENT>
+*/
+(function(h){function i(b,l){var j=b.element||b,c=0,a=0;j.__selectionBookmark&&(c=j.createTextRange(),c.moveToBookmark(j.__selectionBookmark),a=c.text.length,c.collapse(!0),c.moveStart("character",-j.value.length),c=c.text.length,a=c+a);return(l?c:a)||0}function k(b,l,a){var b=b.element||b,c=b.createTextRange();c.collapse(!0);c.moveEnd("character",a);c.moveStart("character",l);c.select();b.__selectionBookmark=c.getBookmark()}var e=Object.defineProperty,f=h.document;if(!("setSelectionRange"in f.createElement("textarea"))&&
+f.attachEvent){var a={selectionStart:{get:function(){return i(this,1)},set:function(b){var a=i(this);k(this,b,a<b?b:a)}},selectionEnd:{get:function(){return i(this)},set:function(b){var a=i(this,1);k(this,a>b?b:a,b)}},setSelectionRange:function(b,a){k(this,b,a)},select:function(){k(this,0,(this.element||this).value.length)}};if(e){var g=h.HTMLTextAreaElement.prototype,m=h.HTMLInputElement.prototype,d;for(d in a)"get"in a[d]?(e(g,d,a[d]),e(m,d,a[d])):g[d]=m[d]=a[d]}else h.__ielt8_=a,g=f.getElementsByTagName("SCRIPT"),
+e=f.createElement("STYLE"),a=f.documentElement.firstChild,g=g[g.length-1].getAttribute("src",-1),e.setAttribute("type","text/css"),e.styleSheet.cssText="INPUT,TEXTAREA{behavior:url("+g+")}",a.insertBefore(e,a.firstChild);(function(b,a){for(var d=0;d<b.length;d++)f.attachEvent(b[d],a)})(["onmouseup","onmousedown","onkeyup"],function(){var b=h.event.srcElement;if(b&&("TEXTAREA"===b.nodeName||"INPUT"===b.nodeName&&"text"===b.type)){var a=f.selection.createRange();a.parentElement()===b&&(b.__selectionBookmark=
+a.getBookmark())}})}})(window);
